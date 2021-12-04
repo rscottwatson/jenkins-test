@@ -15,7 +15,7 @@ spec:
 def printOutput(sourceName) {
     sh '''
         hostname
-        echo "I am using the $sourceName"
+        echo "I am using the " $sourceName
         env 
     '''
 }
@@ -41,6 +41,8 @@ def printOutput(sourceName) {
 
 // Uses Declarative syntax to run commands inside a container.
 pipeline {
+    // default agent
+    // otherwise declare agent none 
     agent {
         kubernetes {
             yaml myContainer
@@ -54,12 +56,12 @@ pipeline {
             }
         }
         stage('YAMLFILE') {
+            agent { 
+                kubernetes { yamlFile jenkins-pod.yaml 
+                             defaultContainer 'shell'
+                            }
+            }
             steps {
-                agent { 
-                    kubernetes { yamlFile jenkins-pod.yaml 
-                                 defaultContainer 'shell'
-                                }
-                    }
                 printOutput("YamlFile")
             }
         }
