@@ -1,0 +1,61 @@
+def myContainer = '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: ubuntu
+    alwaysPullImage: false
+    command:
+    - sleep
+    args:
+    - "9999999"
+'''
+
+//Options for creating the container 
+// 1) yamlFile
+//     yamlFile 'jenkins-pod.yaml'
+// 2) containerTemplate 
+//     containerTemplate {
+//       name 'shell'
+//       image 'ubuntu'
+//       command 'sleep'
+//       args 'infinity'
+//     }
+// 3) inline Yaml
+//     yaml '''
+//yaml goes here
+//'''
+// 4) inline yaml
+//    define a variable that defines the container
+//    and reference it with 
+//    yaml <var_name>
+
+// Uses Declarative syntax to run commands inside a container.
+pipeline {
+    agent {
+        kubernetes {
+            yaml myContainer
+            defaultContainer 'shell'
+        }
+    }
+    stages {
+        stage('Default Agent') {
+            steps {
+                sh 'hostname'
+                echo "I am using the default container"
+            }
+        }
+        stage('YAMLFILE') {
+            steps {
+                agent { 
+                    kubernetes { yamlFile jenkins-pod.yaml 
+                                 defaultContainer 'shell'
+                                }
+                    }
+                sh 'hostname'
+                echo "I am using the yaml file definition"
+            }
+        }
+    }
+}

@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: ubuntu
+    alwaysPullImage: false
+    command:
+    - sleep
+    args:
+    - 9999999
