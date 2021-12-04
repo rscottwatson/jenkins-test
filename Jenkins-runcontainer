@@ -12,6 +12,14 @@ spec:
     - "9999999"
 '''
 
+def printOutput(sourceName) {
+    sh ```
+        hostname
+        echo "I am using the $sourceName"
+        env 
+    ```
+}
+
 //Options for creating the container 
 // 1) yamlFile
 //     yamlFile 'jenkins-pod.yaml'
@@ -42,11 +50,7 @@ pipeline {
     stages {
         stage('Default Agent') {
             steps {
-                sh '''
-                    hostname
-                    echo "I am using the default container"
-                    env 
-                '''
+                printOutput("Default Agent")
             }
         }
         stage('YAMLFILE') {
@@ -56,9 +60,7 @@ pipeline {
                                  defaultContainer 'shell'
                                 }
                     }
-                sh 'hostname'
-                echo "I am using the yaml file definition"
-                env
+                printOutput("YamlFile")
             }
         }
     }
