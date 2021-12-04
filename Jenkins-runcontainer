@@ -42,9 +42,11 @@ pipeline {
     stages {
         stage('Default Agent') {
             steps {
-                sh 'hostname'
-                echo "I am using the default container"
-                env 
+                sh '''
+                    hostname
+                    echo "I am using the default container"
+                    env 
+                '''
             }
         }
         stage('YAMLFILE') {
