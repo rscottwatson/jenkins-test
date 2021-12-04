@@ -13,11 +13,11 @@ spec:
 '''
 
 def printOutput(sourceName) {
-    sh ```
+    sh '''
         hostname
         echo "I am using the $sourceName"
         env 
-    ```
+    '''
 }
 
 //Options for creating the container 
