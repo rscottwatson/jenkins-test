@@ -4,10 +4,11 @@
 // Purpose: Creates a pod using two differenct methods a container based on 
 //          yaml defined in a variable and an external yamlfile.
 // Observations:
-//          Each stage will create a new pod so nothing is available by default 
-//          in the next stage
+//        o The default agent is reused, a new pod is not created when the step
+//          runs when a new agent is not defined.  Steps 1,3 same agent.
+//        o There is a default checkout stage for the job.  This can be changed
+//          by using an option.  
 //*****************************************************************************
-
 def myContainer = '''
 apiVersion: v1
 kind: Pod
@@ -95,7 +96,7 @@ pipeline {
         }
         stage('Which agent now') {
             steps {
-                printOutput("Default Agent" )
+                printOutput("Care to guess?" )
             }
         }
     }
