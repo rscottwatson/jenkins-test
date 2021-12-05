@@ -15,8 +15,6 @@ spec:
 def printOutput( String sourceName ) {
     echo $sourceName
     echo ${sourceName}
-    echo ${SHELL}
-
     sh '''
         set +x
         echo "HOST: $(hostname)"
