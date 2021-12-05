@@ -82,19 +82,27 @@ pipeline {
             checkout scm
         }
         stage('Default Agent') {
-            printOutput("Default Agent" )
+            steps {
+                printOutput("Default Agent" )
+            }
         }
-        stage('YAMLFILE') {
-            agent { 
-                kubernetes { 
-                    yamlFile 'jenkins-pod.yaml' 
-                    defaultContainer 'shell'
+        parallel {
+            stage('YAMLFILE') {
+                agent { 
+                    kubernetes { 
+                        yamlFile 'jenkins-pod.yaml' 
+                        defaultContainer 'shell'
+                    }
+                }
+                steps {
+                    printOutput("YamlFile")
                 }
             }
-            printOutput("YamlFile")
-        }
-        stage('Which agent now') {
-            printOutput("Care to guess?" )
+            stage('Which agent now') {
+                steps {
+                    printOutput("Care to guess?" )
+                }
+            }
         }
     }
 }
