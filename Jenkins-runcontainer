@@ -14,10 +14,15 @@ spec:
 
 def printOutput( String sourceName ) {
     sh '''
-        hostname
+        echo "HOST: $(hostname)"
+        echo "--------------------"
         echo $sourceName
         echo "I am using the " $sourceName
+        echo "-Env-------------------"
         env 
+        echo "-PrintEnv-------------------"
+        printenv | sort
+        echo "=============================" 
     '''
 }
 
