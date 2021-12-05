@@ -86,21 +86,23 @@ pipeline {
                 printOutput("Default Agent" )
             }
         }
-        parallel {
-            stage('YAMLFILE') {
-                agent { 
-                    kubernetes { 
-                        yamlFile 'jenkins-pod.yaml' 
-                        defaultContainer 'shell'
+        stage( 'Run in parallel' ) {
+            parallel {
+                stage('YAMLFILE') {
+                    agent { 
+                        kubernetes { 
+                            yamlFile 'jenkins-pod.yaml' 
+                            defaultContainer 'shell'
+                        }
+                    }
+                    steps {
+                        printOutput("YamlFile")
                     }
                 }
-                steps {
-                    printOutput("YamlFile")
-                }
-            }
-            stage('Which agent now') {
-                steps {
-                    printOutput("Care to guess?" )
+                stage('Which agent now') {
+                    steps {
+                        printOutput("Care to guess?" )
+                    }
                 }
             }
         }
