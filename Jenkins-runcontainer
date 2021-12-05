@@ -13,9 +13,8 @@ spec:
 '''
 
 def printOutput( String sourceName ) {
-    echo sourceName 
-    echo "did this work?"
     sh '''
+        set +x
         echo "HOST: $(hostname)"
         echo "--------------------"
         echo ${sourceName}
