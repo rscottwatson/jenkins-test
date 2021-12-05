@@ -1,0 +1,100 @@
+//*****************************************************************************
+// Name: Jenkins-runcontainer
+// Type: declarative
+// Purpose: Creates a pod using two differenct methods a container based on 
+//          yaml defined in a variable and an external yamlfile.
+// Observations:
+//        o The default agent is reused, a new pod is not created when the step
+//          runs when a new agent is not defined.  Steps 1,3 same agent.
+//        o There is a default checkout stage for the job.  This can be changed
+//          by using an option.  
+//*****************************************************************************
+def myContainer = '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: ubuntu
+    alwaysPullImage: false
+    command:
+    - sleep
+    args:
+    - "9999999"
+'''
+
+def printOutput( String sourceName ) {
+    //
+    // to be able to use the paremeter sourceName it has
+    // to be set as an environment variable because my
+    // sh is using single quotes.  I could have used """
+    // but apparently that is a security risk ( reference? )
+    // However, if we know what we are passing to the function
+    // it should be fine to use """ instead and thus avoid the 
+    // script block.
+    //
+    script { 
+       env.sourceName = sourceName
+    }
+    sh '''
+        set +x
+        echo "HOST: $(hostname)"
+        echo "--------------------"
+        echo "I am using the ${sourceName}"
+        echo "-PrintEnv-------------------"
+        printenv | sort
+        echo "=============================" 
+    '''
+}
+
+//Options for creating the container 
+//https://plugins.jenkins.io/kubernetes/#plugin-content-declarative-pipeline
+// 1) yamlFile
+//     yamlFile 'jenkins-pod.yaml'
+// 2) inline Yaml
+//     yaml '''
+//yaml goes here
+//'''
+// 3) inline yaml
+//    define a variable that defines the container
+//    and reference it with 
+//    yaml <var_name>
+// 4) containerTemplate ( deprecated for yaml )
+//     containerTemplate {
+//       name 'shell'
+//       image 'ubuntu'
+//       command 'sleep'
+//       args 'infinity'
+//     }
+
+// Uses Declarative syntax to run commands inside a container.
+pipeline {
+    // default agent
+    // otherwise declare agent none 
+    agent {
+        kubernetes {
+            yaml myContainer
+            defaultContainer 'shell'
+        }
+    }
+    stages {
+        stage( 'Checkout') {
+            checkout scm
+        }
+        stage('Default Agent') {
+            printOutput("Default Agent" )
+        }
+        stage('YAMLFILE') {
+            agent { 
+                kubernetes { 
+                    yamlFile 'jenkins-pod.yaml' 
+                    defaultContainer 'shell'
+                }
+            }
+            printOutput("YamlFile")
+        }
+        stage('Which agent now') {
+            printOutput("Care to guess?" )
+        }
+    }
+}
