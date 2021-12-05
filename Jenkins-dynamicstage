@@ -20,8 +20,7 @@ pipeline {
         }
     }
     stages {
-        stage('Create List') {
-            agent {node 'nodename'}
+        stage('Setup') {
             steps {
                 script {
                     // iterate over all environments.
