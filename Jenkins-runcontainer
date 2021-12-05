@@ -58,7 +58,7 @@ pipeline {
     stages {
         stage('Default Agent') {
             steps {
-                printOutput("Default Agent")
+                printOutput( 'Default Agent' )
             }
         }
         stage('YAMLFILE') {
@@ -69,7 +69,7 @@ pipeline {
                 }
             }
             steps {
-                printOutput("YamlFile")
+                printOutput( 'YamlFile' )
             }
         }
     }
