@@ -15,6 +15,7 @@ spec:
 def printOutput(sourceName) {
     sh '''
         hostname
+        echo $sourceName
         echo "I am using the " $sourceName
         env 
     '''
@@ -57,13 +58,25 @@ pipeline {
         }
         stage('YAMLFILE') {
             agent { 
-                kubernetes { yamlFile jenkins-pod.yaml 
-                             defaultContainer 'shell'
-                            }
+                kubernetes { 
+                    yamlFile 'jenkins-pod.yaml' 
+                    defaultContainer 'shell'
+                }
             }
             steps {
                 printOutput("YamlFile")
             }
+        }
+    }
+    post {
+        always {
+            echo "This will always run"
+        }
+        aborted {
+            echo "This job was aborted.  Hope you aren't in Texas"
+        }
+        failure {
+            echo "This job failed"
         }
     }
 }
