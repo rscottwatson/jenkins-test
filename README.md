@@ -14,7 +14,8 @@ Skipping the default checkout so we don't have the step
   Declarative: Checkout SCM  listed.
 
 options {
-    skipDefaultCheckout(true)
+    skipDefaultCheckout( true ) 
+    buildDiscarder( logRotator(daysToKeepStr: '7', numToKeepStr: '1') )
 }
 
 Then in the step of the stage do the checkout.

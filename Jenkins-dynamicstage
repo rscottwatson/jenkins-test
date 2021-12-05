@@ -1,0 +1,50 @@
+//*****************************************************************************
+// Name: Jenkins-dynamicstage
+// Type: declarative
+// Purpose: try and create dynamic stages so that we can run an arbitray number
+//          of pipelines.
+//          hopefully these can be operated on in parallel but I am not sure 
+//          how this would actaully happen
+// Observations:
+//     o Can't make this run in parallel.  Maybe a scripted pipeline.
+//     o maybe this answer.
+//         https://stackoverflow.com/a/66438907/11228630
+//*****************************************************************************
+def envs
+pipeline {
+    //default agent
+    agent { 
+        kubernetes { 
+            yamlFile 'jenkins-pod.yaml' 
+            defaultContainer 'shell'
+        }
+    }
+    stages {
+        stage('Create List') {
+            agent {node 'nodename'}
+            steps {
+                script {
+                    // iterate over all environments.
+                    // this could come from a file stored in git instead.
+                    // use a variable for this example
+                    envs = ["Prod-USeast-1", 
+                            "Prod-Germany-1", 
+                            "Prod-USeast-2", 
+                            "Prod-Australia-1", 
+                            "Prod-Canada-1"]
+                }
+            }
+        }
+        stage('Dynamic Stages') {
+            steps {
+                script {
+                    for(int i=0; i < envs.size(); i++) {
+                        stage( 'Build ' + envs[i]){
+                            echo "Terraform init; Terraform plan -out ${envs[i]}.tfplan"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
