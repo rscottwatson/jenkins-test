@@ -12,7 +12,7 @@ spec:
     - "9999999"
 '''
 
-def printOutput(sourceName) {
+def printOutput( String sourceName ) {
     sh '''
         hostname
         echo $sourceName
