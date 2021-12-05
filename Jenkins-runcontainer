@@ -16,8 +16,8 @@ def printOutput( String sourceName ) {
     sh '''
         echo "HOST: $(hostname)"
         echo "--------------------"
-        echo $sourceName
-        echo "I am using the " $sourceName
+        echo sourceName
+        echo "I am using the " sourceName
         echo "-Env-------------------"
         env 
         echo "-PrintEnv-------------------"
