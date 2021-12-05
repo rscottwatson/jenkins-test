@@ -1,3 +1,13 @@
+//*****************************************************************************
+// Name: Jenkins-runcontainer
+// Type: declarative
+// Purpose: Creates a pod using two differenct methods a container based on 
+//          yaml defined in a variable and an external yamlfile.
+// Observations:
+//          Each stage will create a new pod so nothing is available by default 
+//          in the next stage
+//*****************************************************************************
+
 def myContainer = '''
 apiVersion: v1
 kind: Pod
@@ -13,8 +23,15 @@ spec:
 '''
 
 def printOutput( String sourceName ) {
-    // echo $sourceName
-    // echo ${sourceName}
+    //
+    // to be able to use the paremeter sourceName it has
+    // to be set as an environment variable because my
+    // sh is using single quotes.  I could have used """
+    // but apparently that is a security risk ( reference? )
+    // However, if we know what we are passing to the function
+    // it should be fine to use """ instead and thus avoid the 
+    // script block.
+    //
     script { 
        env.sourceName = sourceName
     }
@@ -22,7 +39,6 @@ def printOutput( String sourceName ) {
         set +x
         echo "HOST: $(hostname)"
         echo "--------------------"
-        echo ${sourceName}
         echo "I am using the ${sourceName}"
         echo "-PrintEnv-------------------"
         printenv | sort
@@ -31,23 +47,24 @@ def printOutput( String sourceName ) {
 }
 
 //Options for creating the container 
+//https://plugins.jenkins.io/kubernetes/#plugin-content-declarative-pipeline
 // 1) yamlFile
 //     yamlFile 'jenkins-pod.yaml'
-// 2) containerTemplate 
+// 2) inline Yaml
+//     yaml '''
+//yaml goes here
+//'''
+// 3) inline yaml
+//    define a variable that defines the container
+//    and reference it with 
+//    yaml <var_name>
+// 4) containerTemplate ( deprecated for yaml )
 //     containerTemplate {
 //       name 'shell'
 //       image 'ubuntu'
 //       command 'sleep'
 //       args 'infinity'
 //     }
-// 3) inline Yaml
-//     yaml '''
-//yaml goes here
-//'''
-// 4) inline yaml
-//    define a variable that defines the container
-//    and reference it with 
-//    yaml <var_name>
 
 // Uses Declarative syntax to run commands inside a container.
 pipeline {
@@ -74,6 +91,11 @@ pipeline {
             }
             steps {
                 printOutput("YamlFile")
+            }
+        }
+        stage('Which agent now') {
+            steps {
+                printOutput("Default Agent" )
             }
         }
     }
