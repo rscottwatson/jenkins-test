@@ -35,6 +35,7 @@ pipeline {
             }
             steps {
                 sh """
+                printenv | sort 
                 echo "Cleaned Up Workspace For Project"
                 """
             }
