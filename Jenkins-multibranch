@@ -27,6 +27,7 @@ pipeline {
     stages {
         stage('Cleanup Workspace') {
             steps {
+                input message: 'Are you ready', submitterParameter: 'guilty'
                 sh """
                 echo "Cleaned Up Workspace For Project"
                 """
