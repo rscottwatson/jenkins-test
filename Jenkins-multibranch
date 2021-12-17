@@ -30,6 +30,7 @@ pipeline {
                 input message: 'Are you ready', submitterParameter: 'guilty'
                 sh """
                 echo "Cleaned Up Workspace For Project"
+                echo "Parameter guilty is ${guilty}
                 """
             }
         }
