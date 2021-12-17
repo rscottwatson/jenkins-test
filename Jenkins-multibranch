@@ -28,10 +28,10 @@ pipeline {
         stage('Cleanup Workspace') {
             steps {
                 input message: 'Are you ready', submitterParameter: 'guilty'
-                echo "${guilty}"
+                echo "{guilty}"
                 sh """
                 echo "Cleaned Up Workspace For Project"
-                echo "Parameter guilty is ${guilty}
+                echo "Parameter guilty is ${guilty}"
                 """
             }
         }
