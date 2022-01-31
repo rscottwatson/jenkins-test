@@ -1,0 +1,388 @@
+pipeline {
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: shell
+    image: ubuntu
+    alwaysPullImage: false
+    command:
+    - sleep
+    args:
+    - 9999999
+'''
+            defaultContainer 'shell'
+        }
+    }
+
+    environment {
+        // Access_key_id     = "THIS is$MYID"
+        // Secret_access_key = "%Scott$HOSTNAME"
+
+        ACCESS_KEY_ID     = credentials('jenkins-secret-key-id')
+        SECRET_ACCESS_KEY = credentials('jenkins-secret-access-key')
+        MY_ENV_VAR_SPACE     = "This has a space"
+        MY_ENV_VAR_SQUOTE    = "A single ' quote in here"
+        MY_ENV_VAR_DQUOTE    = 'A double " quote in here'
+        MY_ENV_VAR_DOLLARSIGN = 'This has a $ sign'
+        MY_ENV_VAR_UNDEFINED  = '$NOTDEFINED'
+        MY_ENV_VAR_DEFINED    = '$HOME'
+    }
+    stages {
+        stage('Print env vars') {
+            steps {
+                sh 'printenv'
+            }
+        }
+        stage('Groovy and Shell substitution') {
+            steps {
+                // Notes:
+                // http://groovy-lang.org/syntax.html#_string_interpolation
+                // triple single quote is treated as as string and no interpolation is performend
+                //
+                // To see what is expanded by Jenkins goovy
+                
+                echo "Workspace expanded in groovy  \${WORKSPACE} = $WORKSPACE"
+                echo "Workspace expanded in groovy  \${WORKSPACE} = \$WORKSPACE"
+                echo "Workspace expanded in groovy  \${WORKSPACE} = ${env.WORKSPACE}"
+                echo "Workspace expanded in groovy  \${WORKSPACE} = \${env.WORKSPACE}"
+                echo "Workspace expanded in groovy  \${WORKSPACE} = ${WORKSPACE}"
+                echo "Workspace expanded in groovy  \${WORKSPACE} = \${WORKSPACE}"
+                
+                sh label: 'DoubleQuotes', script:  """
+                    # x don't echo commands
+                    # u don't treat unset variables as an error
+                    # e don't exit is a command fails
+                    set +xue
+                    echo "=================================================="
+                    # This will be expaneded by groovy expansion 
+                    echo "Workspace expanded in shell = $WORKSPACE"
+                    
+                    # This will be expaneded by the SHELLs Environment variable
+                    echo "Workspace expanded in shell = \$WORKSPACE"
+                    
+                    # This will be expaneded by groovy expansion 
+                    echo "Workspace expanded in shell = ${env.WORKSPACE}"
+                    
+                    # won't be able to print this since we are asking the shell to print the variable because the 
+                    # dollar sign is escaped and the env map doens't exist in the shells environment variables
+                    #echo "Workspace expanded in shell = \${env.WORKSPACE}"
+
+                    echo "Workspace expanded in shell = \\\$WORKSPACE"
+                    # prints Workspace expanded in shell = \$WORKSPACE (need to add the slash so it doesn't get expanded in the comment)
+                    # groovy will escape both the slash and the dollar sign passing a slash dollar sign to the shell
+                    # the shell will see a slash dollar sign and not perform variable substitution
+                """.stripIndent()
+            }
+        }
+        stage('Build Double Quoted Script') {
+            steps {
+                //
+                // this will use both groovy and shell variable substition
+                //
+                sh label: 'DoubleQuotes', script:  """
+                    # A lot of escaping is required with triple quoted strings
+                    
+                    cat << EOFCAT > ${env.WORKSPACE}/myscriptdouble.sh
+                    #!/bin/sh
+                    set +x
+                    echo "Parameter count : \\\$#"
+                    echo "You passed parameter 1 = \\\$1"
+                    echo "You passed parameter 2 = \\\$2"
+                    echo "You passed parameter 3 = \\\$3"
+                    echo "All the parameters \\\$*"
+                    EOFCAT
+                    chmod +x ${env.WORKSPACE}/myscriptdouble.sh
+                    
+                    cat ${env.WORKSPACE}/myscriptdouble.sh
+                """.stripIndent()
+               
+            }
+        } 
+        stage('Build Single Quoted Script') {
+            steps {
+                
+                // there will be no grooy interpolation
+                // it will be passed to the shell as is
+                //
+                // oddly I still need to escape the slash and dollar sign
+                // I was expecting to only have to escape the dollar sign 
+                sh label: 'SingleQuotes', script: '''
+                    
+                    # A lot of escaping is required with triple quoted strings
+                    
+                    cat << EOFCAT > ${WORKSPACE}/myscriptsingle.sh
+                    #!/bin/sh
+                    set +x
+                    echo \\\$\\\$
+                    echo "Parameter count : \\\$#"
+                    echo "You passed parameter 1 = \\\$1"
+                    echo "You passed parameter 2 = \\\$2"
+                    echo "You passed parameter 3 = \\\$3"
+                    echo "All the parameters \\\$*"
+                    EOFCAT
+                    chmod +x ${WORKSPACE}/myscriptsingle.sh
+                    
+                    cat ${WORKSPACE}/myscriptsingle.sh
+                '''.stripIndent()
+
+                //' fix for some syntax highlighting in vscode 
+            }
+        }
+        stage('show defined environment variables') {
+            steps {
+                echo "Double quotes with env map : ${env.MY_ENV_VAR_SPACE} ${env.MY_ENV_VAR_DQUOTE} ${env.MY_ENV_VAR_SQUOTE}"
+                echo "Double quotes with no env  : ${MY_ENV_VAR_SPACE} ${MY_ENV_VAR_DQUOTE} ${MY_ENV_VAR_SQUOTE}"
+                echo "Escaped dollar sign        : \${MY_ENV_VAR_SPACE} \${MY_ENV_VAR_DQUOTE} \${MY_ENV_VAR_SQUOTE}"
+                echo 'Single quote with env map  : ${env.MY_ENV_VAR_SPACE} ${env.MY_ENV_VAR_DQUOTE} ${env.MY_ENV_VAR_SQUOTE}'
+                echo 'Single quote with no env   : ${MY_ENV_VAR_SPACE} ${MY_ENV_VAR_DQUOTE} ${MY_ENV_VAR_SQUOTE}'
+
+                // 1: Syntax error: Unterminated quoted string  ( variable contains a quote character )
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh ${env.MY_ENV_VAR_SPACE} ${env.MY_ENV_VAR_DQUOTE} ${env.MY_ENV_VAR_SQUOTE}"
+                    } catch (Exception e) {
+                        echo "Catch of non quoted groovy env variable : "  + e.toString()
+                    } finally {
+                        echo "Finally of non quoted groovy env variable"
+                    }
+                }
+
+                // 1: Syntax error: Unterminated quoted string  ( variable contains a quote character )
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh ${MY_ENV_VAR_SPACE} ${MY_ENV_VAR_DQUOTE} ${MY_ENV_VAR_SQUOTE}"
+                    } catch (Exception e) {
+                        echo "Catch of non quoted groovy variable : "  + e.toString()
+                    } finally {
+                        echo "Finally of non quoted groovy variable"
+                    }
+                }
+
+                // runs but does not pass the strings in 3 parameters treated as 16 parameters as vars are not quoted 
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh \${MY_ENV_VAR_SPACE} \${MY_ENV_VAR_DQUOTE} \${MY_ENV_VAR_SQUOTE}"
+                    } catch (Exception e) {
+                        echo "Catch of escaped all arguments : "  + e.toString()
+                    } finally {
+                        echo "Finally of escaped all arguments"
+                    }
+                }
+
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh \"${MY_ENV_VAR_SPACE}\" \"${MY_ENV_VAR_DQUOTE}\" \"${MY_ENV_VAR_SQUOTE}\""
+                    } catch (Exception e) {
+                        echo "Catch of double quoted all arguments : "  + e.toString()
+                    } finally {
+                        echo "Finally of double quoted all arguments"
+                    }
+                }
+
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh '${MY_ENV_VAR_SPACE}' '${MY_ENV_VAR_DQUOTE}' '${MY_ENV_VAR_SQUOTE}'"
+                    } catch (Exception e) {
+                        echo "Catch of single quoted all arguments : "  + e.toString()
+                    } finally {
+                        echo "Finally of single quoted all arguments"
+                    }
+                }
+
+                //
+                // This is the only one that works when the variable contains a quote.
+                //
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh '${MY_ENV_VAR_SPACE}' '${MY_ENV_VAR_DQUOTE}' \"${MY_ENV_VAR_SQUOTE}\" "
+                    } catch (Exception e) {
+                        echo "Catch of mixed quoted arguments : "  + e.toString()
+                    } finally {
+                        echo "Finally of mixed quoted arguments"
+                    }
+                }
+
+                //does shell expansion on the 3rd parameter since it is in double quotes but passed to the script as a single parameter 
+               script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh '\${MY_ENV_VAR_SPACE}' '\${MY_ENV_VAR_DQUOTE}' \"\${MY_ENV_VAR_SQUOTE}\" "
+                    } catch (Exception e) {
+                        echo "Catch of escape groovy expansion and single quote around first two params and double around 3rd param : "  + e.toString()
+                    } finally {
+                        echo "Finally of escape groovy expansion and single quote around first two params and double around 3rd param"
+                    }
+                }
+
+                // does not work : passes the string ${MY_ENV_VAR_SPACE} ${MY_ENV_VAR_DQUOTE} ${MY_ENV_VAR_SQUOTE}
+               script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh \"\\\${MY_ENV_VAR_SPACE}\" \"\\\${MY_ENV_VAR_DQUOTE}\" \"\\\${MY_ENV_VAR_SQUOTE}\" "
+                    } catch (Exception e) {
+                        echo "Catch of escape both the groovy interpolation and shell expansion : "  + e.toString()
+                    } finally {
+                        echo "Finally of escape both the groovy interpolation and shell expansion "
+                    }
+                }
+
+                // this does not work since we have a string with 3 double quotes 
+                script {
+                    try {
+                        sh "${WORKSPACE}/myscriptsingle.sh \"${MY_ENV_VAR_SPACE}\" \"${MY_ENV_VAR_DQUOTE}\" \"${MY_ENV_VAR_SQUOTE}\" "
+                    } catch (Exception e) {
+                        echo "Catch of escape double quote around each parameter : "  + e.toString()
+                    } finally {
+                        echo "Finally of escape double quote around each parameter"
+                    }
+                }
+
+                // This seemed to work for all the parameters 
+                script {
+                    try {
+                        sh '${WORKSPACE}/myscriptsingle.sh \"${MY_ENV_VAR_SPACE}\" \"${MY_ENV_VAR_DQUOTE}\" \"${MY_ENV_VAR_SQUOTE}\" '
+                    } catch (Exception e) {
+                        echo "Catch of script in a single quotes with escaped double quote : "  + e.toString()
+                    } finally {
+                        echo "Finally of script in a single quotes with escaped double quote"
+                    }
+                }
+
+                // This seemed to work for all the parameters 
+                script {
+                    try {
+                        sh '${WORKSPACE}/myscriptsingle.sh "${MY_ENV_VAR_SPACE}" "${MY_ENV_VAR_DQUOTE}" "${MY_ENV_VAR_SQUOTE}" '
+                    } catch (Exception e) {
+                        echo "Catch of script in a single quotes with each param in double quotes  : "  + e.toString()
+                    } finally {
+                        echo "Finally of script in a single quotes with each param in double quotes"
+                    }
+                }
+
+                // Param 1 will be empty string 
+                // Param 2 will be the value of the HOME environment variable
+                // Param 3 will be the string $HOME   
+                script {
+                    try {
+                        sh '${WORKSPACE}/myscriptsingle.sh "\${NOTFOUNDINSHELL}" "\${HOME}" "\\\${HOME}" '
+                    } catch (Exception e) {
+                        echo "Catch of random test  : "  + e.toString()
+                    } finally {
+                        echo "Finally of random test"
+                    }
+                }                
+
+            }
+        }   
+        stage('shell command with double quotes') {
+            steps {
+                
+                sh '''set +x; cat << EOF
+                // Using the SH script function with single quotes will prevent any variable substituion in groovy 
+                // however, the shell will still try VARIABLE substition. 
+                //
+                // If the command is in double quotes groov will still replace the variables within single quotes.
+                // What is odd is that the shell variable in single quotes is still expanded by the shell it has
+                // to be escaped in order for the shell to not expand it.
+                //
+                // Quotes around the variable are necessary to make sure the entire string is associated with the
+                // variable placeholder.  Otherwise if the string contained a space this would cause all the parameter
+                // to shift to the next placeholder
+                //
+                // Actually we should not pass any environment variables to a script.  The script should just pick them up!
+                // that way we do not need to worry about quoting.
+                EOF  
+                '''.stripIndent()
+
+                // This is the only example that works as expected with the values being passed as expected.
+                // despite $HOME being in single quotes it is still expanded by the shell if we do not escape the dollar sign 
+                sh "${WORKSPACE}/myscriptsingle.sh '${ACCESS_KEY_ID}' '${SECRET_ACCESS_KEY}' '\$HOME' 'PARAMS_IN_SINGLE_QUOTES' | tee  ${WORKSPACE}/out1.0"
+                sh "cat ${WORKSPACE}/out1.0"
+
+                // MOSTLY WORKS as expected with goovy interpolation but $ HOME is getting expanded by the shell why?
+                // if I run a command with '' in the shell the varibale is not substituted so why is that happening here. 
+                sh "${WORKSPACE}/myscriptsingle.sh '${env.ACCESS_KEY_ID}' '${env.SECRET_ACCESS_KEY}' '$HOME' 'SH_GROOVY_PARAM_SINGLE_QUOTES' | tee ${WORKSPACE}/out1.1"
+                sh "cat ${WORKSPACE}/out1.1"
+
+                // MOSTLY WORKS as expected ( was this the shell or groovy )  $ HOME is getting expanded by the shell why?
+                // if I run a command with '' in the shell the varibale is not substituted so why is that happening here. 
+                sh "${WORKSPACE}/myscriptsingle.sh '${ACCESS_KEY_ID}' '${SECRET_ACCESS_KEY}' '$HOME' 'PARAMS_IN_SINGLE_QUOTES' | tee  ${WORKSPACE}/out1.2"
+                sh "cat ${WORKSPACE}/out1.2"
+
+                // no good as both groovy and shell expansion happend on the value passed 
+                // ACCESS_KEY_ID was this 'THIS is$MYID' was expaneded to 'THIS is'
+                // SECRET_ACCESS_KEY was this '%Scott$HOSTNAME' but was expanded to '%Scottdeclarative-interpolation-xxxxxxxx' 
+                sh "${WORKSPACE}/myscriptsingle.sh \"${env.ACCESS_KEY_ID}\" \"${env.SECRET_ACCESS_KEY}\" \"SH_GROOVY_PARAM_DOUBLE_QUOTES\" | tee ${WORKSPACE}/out1.3"
+                sh "cat ${WORKSPACE}/out1.3"
+
+                // no good as both groovy and shell expansion happend on the value passed 
+                // ACCESS_KEY_ID was this 'THIS is$MYID' was expaneded to 'THIS is'
+                // SECRET_ACCESS_KEY was this '%Scott$HOSTNAME' but was expanded to '%Scottdeclarative-interpolation-xxxxxxxx' 
+                sh "${WORKSPACE}/myscriptsingle.sh \"${ACCESS_KEY_ID}\" \"${SECRET_ACCESS_KEY}\" \"PARAMS_IN_SINGLE_QUOTES\" | tee ${WORKSPACE}/out1.4"
+                sh "cat ${WORKSPACE}/out1.4"
+
+            }
+        }    
+        stage('shell command with triple double quotes') {
+            steps {
+
+                // using tripple quotes is cleaner however, we are going to get a warning since groovy is doing the interpolation  
+                // unless $HOME is escaped it will always be expaneded by the shell 
+                //
+                // Did not work as expected
+                sh """${WORKSPACE}/myscriptsingle.sh "${ACCESS_KEY_ID}" "${SECRET_ACCESS_KEY}" '$HOME' "GROOVY_NO_ENV_TRIPPLE_QUOTES_PARAM_DQUOTES" | tee ${WORKSPACE}/out2.1 """
+                sh "cat ${WORKSPACE}/out2.1"
+              
+                // Did not work as expected
+                sh """${WORKSPACE}/myscriptsingle.sh "${env.ACCESS_KEY_ID}" "${env.SECRET_ACCESS_KEY}" '$HOME' "GROOVY_WITH_ENV_TRIPPLE_QUOTES_PARAM_DQUOTES" | tee ${WORKSPACE}/out2.2 """
+                sh "cat ${WORKSPACE}/out2.2"
+
+                // This worked 
+                sh """${WORKSPACE}/myscriptsingle.sh '${ACCESS_KEY_ID}' '${SECRET_ACCESS_KEY}' '$HOME' "GROOVY_NO_ENV_TRIPPLE_QUOTES_PARAM_SINGLE_QUOTES" | tee ${WORKSPACE}/out2.3 """
+                sh "cat ${WORKSPACE}/out2.3"
+                
+                // This worked 
+                sh """${WORKSPACE}/myscriptsingle.sh '${env.ACCESS_KEY_ID}' '${env.SECRET_ACCESS_KEY}' '$HOME' "GROOVY_WITH_ENV_TRIPPLE_QUOTES_PARAM_SINGLE_QUOTES" | tee ${WORKSPACE}/out2.4 """
+                sh "cat ${WORKSPACE}/out2.4"
+
+                // Did not work as expected
+                // just passed in the literal scripts with the dollar sign 
+                sh """${WORKSPACE}/myscriptsingle.sh "\\\${ACCESS_KEY_ID}" "\\\${SECRET_ACCESS_KEY}" '$HOME' "DOUBLE ESCAPED" | tee ${WORKSPACE}/out2.5 """
+                sh "cat ${WORKSPACE}/out2.5"
+
+            }
+        }  
+        stage('shell command with single quotes') {
+            steps {
+                sh '''set +x; cat << EOF
+                //
+                // using single quotes wont work because groovy wont interpolate the strings
+                // cant use env.VARIABLE in single quotes since this gets passed to the shell
+                //
+                EOF 
+                '''
+                script {
+                    try {
+                        sh '${WORKSPACE}/myscriptsingle.sh ${env.ACCESS_KEY_ID} ${env.SECRET_ACCESS_KEY} $HOME | tee ${WORKSPACE}/out3.0'
+                        sh "cat ${WORKSPACE}/out3.0"
+                    } catch (Exception e) {
+                        // this never runs despite the above causing an error "Bad substitution"
+                        echo "The groovy script 3.0 produced an error " + e.toString() 
+                    } finally {
+                        echo "Looks like we dodged a bullet on that one."
+                    }
+                }
+
+                sh '${WORKSPACE}/myscriptsingle.sh $ACCESS_KEY_ID $SECRET_ACCESS_KEY $HOME | tee ${WORKSPACE}/out3.1'
+                sh "cat ${WORKSPACE}/out3.1"
+
+                sh '${WORKSPACE}/myscriptsingle.sh "$ACCESS_KEY_ID" "$SECRET_ACCESS_KEY" "$HOME" | tee ${WORKSPACE}/out3.2'
+                sh "cat ${WORKSPACE}/out3.2"
+ 
+                //input 'ready to quit'
+            }
+        }
+    }
+}

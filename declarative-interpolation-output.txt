@@ -1,0 +1,79 @@
+OUT1 results
+
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out1.0
+61
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = $HOME
+All the parameters THIS is$MYID %Scott$HOSTNAME $HOME PARAMS_IN_SINGLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out1.1
+106
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is$MYID %Scott$HOSTNAME /home/jenkins SH_GROOVY_PARAM_SINGLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out1.2
+149
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is$MYID %Scott$HOSTNAME /home/jenkins PARAMS_IN_SINGLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out1.3
+193
+You passed parameter 1 = THIS is
+You passed parameter 2 = %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66
+You passed parameter 3 = SH_GROOVY_PARAM_DOUBLE_QUOTES
+All the parameters THIS is %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66 SH_GROOVY_PARAM_DOUBLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out1.4
+241
+You passed parameter 1 = THIS is
+You passed parameter 2 = %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66
+You passed parameter 3 = PARAMS_IN_SINGLE_QUOTES
+All the parameters THIS is %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66 PARAMS_IN_SINGLE_QUOTES
+
+
+OUT2 results
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out2.1
+284
+You passed parameter 1 = THIS is
+You passed parameter 2 = %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66 /home/jenkins GROOVY_NO_ENV_TRIPPLE_QUOTES_PARAM_DQUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out2.2
+330
+You passed parameter 1 = THIS is
+You passed parameter 2 = %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is %Scottdeclarative-interpolation-77-k16gf-f3glz-mfn66 /home/jenkins GROOVY_WITH_ENV_TRIPPLE_QUOTES_PARAM_DQUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out2.3
+376
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is$MYID %Scott$HOSTNAME /home/jenkins GROOVY_NO_ENV_TRIPPLE_QUOTES_PARAM_SINGLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out2.4
+419
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = /home/jenkins
+All the parameters THIS is$MYID %Scott$HOSTNAME /home/jenkins GROOVY_WITH_ENV_TRIPPLE_QUOTES_PARAM_SINGLE_QUOTES
+root@declarative-interpolation-77-k16gf-f3glz-mfn66:/home/jenkins/agent/workspace/Declarative-interpolation# cat out2.5
+466
+You passed parameter 1 = ${ACCESS_KEY_ID}
+You passed parameter 2 = ${SECRET_ACCESS_KEY}
+You passed parameter 3 = /home/jenkins
+All the parameters ${ACCESS_KEY_ID} ${SECRET_ACCESS_KEY} /home/jenkins DOUBLE ESCAPED
+
+OUT3 results
+root@declarative-interpolation-80-b0m9z-m77lg-rlqkz:/home/jenkins/agent/workspace/Declarative-interpolation# cat out3.1
+378
+You passed parameter 1 = THIS
+You passed parameter 2 = is$MYID
+You passed parameter 3 = %Scott$HOSTNAME
+All the parameters THIS is$MYID %Scott$HOSTNAME /root
+root@declarative-interpolation-80-b0m9z-m77lg-rlqkz:/home/jenkins/agent/workspace/Declarative-interpolation# cat out3.2
+412
+You passed parameter 1 = THIS is$MYID
+You passed parameter 2 = %Scott$HOSTNAME
+You passed parameter 3 = /root
+All the parameters THIS is$MYID %Scott$HOSTNAME /root
