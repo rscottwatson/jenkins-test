@@ -1,4 +1,4 @@
-If we pull up a secret from the Credentials page and select update anwe can then inspect the page where we can find the encrypted secret
+If we pull up a secret from the Credentials page and select update we can then inspect the page where we can find the encrypted secret
 
 eg {AQAAABAAAAAQlI/0ApLu3oAoflKtLirppOQRhqr1lAZ8+stbbgrcoYY=}
 
